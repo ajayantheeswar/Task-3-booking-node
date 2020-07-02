@@ -16,7 +16,12 @@ const Trip = sequelize.define('trip',{
     destination: Sequelize.STRING,
     timing : Sequelize.STRING,
     SeatAvailable : Sequelize.INTEGER,
-    fare : Sequelize.DOUBLE
+    fare : Sequelize.DOUBLE,
+    chat : {
+        type : Sequelize.BOOLEAN,
+        allowNull : false,
+        defaultValue : false
+    }
 });
 
 

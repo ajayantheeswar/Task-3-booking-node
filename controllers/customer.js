@@ -5,6 +5,7 @@ const Trip = require('../Models/trip');
 const Ticket = require('../Models/ticket');
 const Seat = require('../Models/seat');
 const sequelize = require('../utils/database');
+const {getDb} = require('../utils/mongo');
 
 const getBusById = (busid,success,fail) => {
     Bus.findByPk(busid)
@@ -224,3 +225,16 @@ exports.deleteTicket = async (req,res,next) => {
         res.status(400).json({Message : "FAil"});
     })
 }
+
+exports.getTripChats = async (req,res,next) => {
+    try{
+        const {tripId} = req.body;
+        const db = getDb();
+        const prevMessages = await db.collection('chatroom').find({tripId:tripId}).toArray();
+        res.status(200).json({prevMessages : prevMessages || []});
+    }
+    catch(err){
+        res.status(200).json({error : err});
+    }
+}
+

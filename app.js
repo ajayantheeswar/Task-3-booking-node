@@ -18,7 +18,13 @@ const AdminRoutes = require('./routes/admin');
 const CustomerRoutes = require('./routes/customer');
 
 
+const {mongoConnect, getDb} = require('./utils/mongo');
+let mDb;
+
 const app = express();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
+
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -79,8 +85,8 @@ Customer.hasMany(Seat);
 
 
 
-/*
-sequelize
+
+/*sequelize
   .sync({force : true})
   .then(response => {
     return AdminUser.create({
@@ -125,11 +131,89 @@ sequelize
   .catch(err => {
     console.log(err);
   });
-
 */
 
+mongoConnect(() => {
+    mDb = getDb();
+    console.log('MongoDb Coonected !');
+});
 
-  sequelize.sync({force :true})
+
+
+sequelize.sync()
   .then(res=>{
-    app.listen(3001);
+    //app.listen(3001);
+    server.listen(3001);
   });
+
+const chat = io.of('/chat');
+const location = io.of('/location');
+const chats = require('./utils/chat');
+chat.use(chats.auth);
+location.use(chats.auth);
+  
+
+chat.on("connection", (socket) => {
+  console.log("Connected: " + socket.user.id);
+
+  socket.on("disconnect", () => {
+    console.log("Disconnected: " + socket.user.id);
+  });
+
+  socket.on("joinRoom", ({ tripId }) => {
+    socket.join(tripId);
+    console.log("A user joined chatroom: " + tripId);
+  });
+
+  socket.on("leaveRoom", ({ tripId }) => {
+    socket.leave(tripId);
+    console.log("A user left chatroom: " + tripId);
+  });
+
+  socket.on("chatroomMessage", async ({ tripId, message }) => {
+    
+    if (message.trim().length > 0) {
+      const user = socket.user
+      const newMessage = {
+        tripId: tripId,
+        message,
+        name: user.name,
+        userId: user.id,
+      }
+      chat.to(tripId).emit("newMessage", {
+        message,
+        name: user.name,
+        userId: user.id,
+      });
+      await mDb.collection('chatroom').insertOne(newMessage);
+    }
+  });
+});
+
+// location 
+
+location.on('connection',(socket)=>{
+  socket.on("disconnect", () => {
+    console.log("Disconnected: " + socket.user.id);
+  });
+
+  socket.on("joinRoom", ({ tripId }) => {
+    socket.join(tripId);
+    console.log("A user joined chatroom: " + tripId);
+    console.log('location');
+  });
+
+  socket.on("leaveRoom", ({ tripId }) => {
+    socket.leave(tripId);
+    console.log("A user left chatroom: " + tripId);
+  });
+
+  socket.on('newLocation', async({location , tripId}) => {
+    const loc = {
+      tripId : tripId,
+      location : location
+    }
+    socket.to(tripId).emit('locationUpdated',loc);
+    await mDb.collection('locations').insertOne(loc); 
+  })
+})

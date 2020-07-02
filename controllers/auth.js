@@ -14,7 +14,7 @@ exports.createAdmin = (req,res,next) =>{
         //console.log(tokenHash);
         const Auth_token = jwt.sign(user.dataValues.id,tokenHash.token);
         console.log(Auth_token);
-        res.status(200).json({token : Auth_token , message: "Auth Success"});
+        res.status(200).json({token : Auth_token , message: "Auth Success" , userId:user.dataValues.id});
     }).catch(error =>{ 
         error.message = "This Username is Already Taken";
         res.status(401).json(error);
@@ -33,7 +33,7 @@ exports.authAdmin = (req,res,next) => {
         if(users.length !== 0){
             const User = users[0];
             const Auth_token = jwt.sign(User.dataValues.id,tokenHash.token);
-            res.status(200).json({token : Auth_token , message: "Auth Success"});
+            res.status(200).json({token : Auth_token , message: "Auth Success",userId: User.dataValues.id});
         }else{
             res.status(401).json({message : "Username Does not Exist"});
         }
@@ -55,7 +55,7 @@ exports.createCustomer = (req,res,next) =>{
         //console.log(tokenHash);
         const Auth_token = jwt.sign(user.dataValues.id,tokenHash.token);
         console.log(Auth_token);
-        res.status(200).json({token : Auth_token , message: "Auth Success"});
+        res.status(200).json({token : Auth_token , message: "Auth Success" , userId: user.dataValues.id});
     }).catch(error =>{ 
         error.message = "This Username is Already Taken";
         res.status(401).json(error);
@@ -74,7 +74,7 @@ exports.authCustomer = (req,res,next) => {
         if(users.length !== 0){
             const User = users[0];
             const Auth_token = jwt.sign(User.dataValues.id,tokenHash.token);
-            res.status(200).json({token : Auth_token , message: "Auth Success"});
+            res.status(200).json({token : Auth_token , message: "Auth Success" ,userId : User.dataValues.id});
         }else{
             res.status(401).json({message : "Username Does not Exists"});
         }
